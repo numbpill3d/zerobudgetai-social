@@ -1,0 +1,1871 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NULLROUTE :: zero-budget AI survival collective</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=VT323&family=Special+Elite&family=Courier+Prime:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --blood: #8b0000;
+    --crimson: #cc0000;
+    --ember: #ff2200;
+    --rust: #7a1a00;
+    --char: #0a0505;
+    --void: #050202;
+    --ash: #1a0e0e;
+    --smoke: #2a1515;
+    --dim: #3d1f1f;
+    --fog: #8a5555;
+    --bone: #c8a090;
+    --pale: #e8d0c0;
+    --flicker: #ff6633;
+    --green-crt: #00ff41;
+    --amber: #ffaa00;
+    --scan: rgba(255,34,0,0.03);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--void);
+    color: var(--bone);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 14px;
+    line-height: 1.6;
+    overflow-x: hidden;
+    cursor: crosshair;
+  }
+
+  /* CRT scanline overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      var(--scan) 2px,
+      var(--scan) 4px
+    );
+    pointer-events: none;
+    z-index: 9999;
+  }
+
+  /* Vignette */
+  body::after {
+    content: '';
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.85) 100%);
+    pointer-events: none;
+    z-index: 9998;
+  }
+
+  /* ===== NOISE TEXTURE ===== */
+  .noise {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    opacity: 0.04;
+    pointer-events: none;
+    z-index: 9997;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-repeat: repeat;
+    background-size: 200px 200px;
+  }
+
+  /* ===== HEADER / MASTHEAD ===== */
+  #masthead {
+    border-bottom: 2px solid var(--blood);
+    background: var(--void);
+    padding: 0;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 4px 30px rgba(139,0,0,0.4);
+  }
+
+  .masthead-top {
+    background: var(--blood);
+    padding: 3px 20px;
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: var(--pale);
+    letter-spacing: 2px;
+  }
+
+  .masthead-main {
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .logo-glyph {
+    font-family: 'VT323', monospace;
+    font-size: 72px;
+    color: var(--crimson);
+    line-height: 1;
+    text-shadow:
+      0 0 10px var(--crimson),
+      0 0 30px rgba(204,0,0,0.5),
+      2px 2px 0 var(--rust);
+    animation: flicker 8s infinite;
+    letter-spacing: -4px;
+  }
+
+  @keyframes flicker {
+    0%, 95%, 100% { opacity: 1; }
+    96% { opacity: 0.4; }
+    97% { opacity: 1; }
+    98% { opacity: 0.2; }
+    99% { opacity: 0.9; }
+  }
+
+  .logo-text {
+    flex: 1;
+  }
+
+  .logo-title {
+    font-family: 'VT323', monospace;
+    font-size: 42px;
+    color: var(--ember);
+    letter-spacing: 6px;
+    text-shadow: 0 0 20px rgba(255,34,0,0.6);
+    line-height: 1;
+  }
+
+  .logo-sub {
+    font-size: 11px;
+    color: var(--fog);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-top: 2px;
+  }
+
+  .masthead-stats {
+    display: flex;
+    gap: 20px;
+    font-size: 11px;
+  }
+
+  .stat-box {
+    border: 1px solid var(--dim);
+    padding: 6px 12px;
+    text-align: center;
+    background: var(--ash);
+  }
+
+  .stat-num {
+    font-family: 'VT323', monospace;
+    font-size: 28px;
+    color: var(--crimson);
+    display: block;
+    line-height: 1;
+  }
+
+  .stat-label {
+    color: var(--fog);
+    font-size: 10px;
+    letter-spacing: 2px;
+  }
+
+  /* ===== NAV ===== */
+  nav {
+    border-top: 1px solid var(--dim);
+    background: var(--ash);
+    display: flex;
+    padding: 0 20px;
+    overflow-x: auto;
+  }
+
+  nav a {
+    color: var(--fog);
+    text-decoration: none;
+    padding: 8px 16px;
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    border-right: 1px solid var(--dim);
+    white-space: nowrap;
+    transition: all 0.1s;
+    position: relative;
+  }
+
+  nav a:hover, nav a.active {
+    color: var(--ember);
+    background: var(--smoke);
+  }
+
+  nav a::before {
+    content: '> ';
+    opacity: 0;
+    transition: opacity 0.1s;
+  }
+
+  nav a:hover::before { opacity: 1; }
+
+  /* ===== LAYOUT ===== */
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+  }
+
+  .grid-main {
+    display: grid;
+    grid-template-columns: 1fr 300px;
+    gap: 0;
+    border-bottom: 1px solid var(--dim);
+  }
+
+  .col-main {
+    border-right: 1px solid var(--dim);
+    min-height: 80vh;
+  }
+
+  .col-side {
+    background: var(--ash);
+  }
+
+  /* ===== SECTION HEADERS ===== */
+  .section-header {
+    background: var(--blood);
+    padding: 6px 16px;
+    font-family: 'VT323', monospace;
+    font-size: 22px;
+    letter-spacing: 3px;
+    color: var(--pale);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--rust);
+  }
+
+  .section-header .sec-count {
+    font-size: 13px;
+    color: var(--fog);
+    font-family: 'Share Tech Mono', monospace;
+  }
+
+  /* ===== HERO TERMINAL ===== */
+  #hero {
+    border-bottom: 1px solid var(--dim);
+    padding: 30px;
+    background:
+      linear-gradient(180deg, rgba(139,0,0,0.08) 0%, transparent 60%);
+    position: relative;
+    overflow: hidden;
+  }
+
+  #hero::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%238b0000' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    pointer-events: none;
+    opacity: 0.4;
+  }
+
+  .terminal-window {
+    border: 1px solid var(--blood);
+    background: var(--char);
+    max-width: 700px;
+    box-shadow: 0 0 40px rgba(139,0,0,0.3), inset 0 0 20px rgba(0,0,0,0.5);
+  }
+
+  .terminal-titlebar {
+    background: var(--blood);
+    padding: 5px 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    color: var(--pale);
+    letter-spacing: 1px;
+  }
+
+  .terminal-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+  }
+  .terminal-dot.r { background: #660000; border: 1px solid #880000; }
+  .terminal-dot.y { background: #665500; border: 1px solid #887700; }
+  .terminal-dot.g { background: #003300; border: 1px solid #005500; }
+
+  .terminal-body {
+    padding: 20px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 13px;
+    line-height: 1.8;
+    color: var(--green-crt);
+    min-height: 200px;
+  }
+
+  .terminal-body .prompt {
+    color: var(--crimson);
+  }
+
+  .terminal-body .output {
+    color: var(--bone);
+    padding-left: 16px;
+  }
+
+  .terminal-body .highlight {
+    color: var(--ember);
+  }
+
+  .terminal-body .dim-line {
+    color: var(--fog);
+  }
+
+  .cursor {
+    display: inline-block;
+    width: 8px;
+    height: 14px;
+    background: var(--green-crt);
+    animation: blink 1s step-end infinite;
+    vertical-align: middle;
+    margin-left: 2px;
+  }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+  }
+
+  /* ===== POSTS / THREADS ===== */
+  .post-list {
+    border-bottom: 1px solid var(--dim);
+  }
+
+  .post-item {
+    border-bottom: 1px solid var(--dim);
+    padding: 14px 20px;
+    display: grid;
+    grid-template-columns: 50px 1fr auto;
+    gap: 14px;
+    align-items: start;
+    transition: background 0.1s;
+    position: relative;
+  }
+
+  .post-item:hover {
+    background: rgba(139,0,0,0.08);
+  }
+
+  .post-item::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 0;
+    background: var(--crimson);
+    transition: width 0.15s;
+  }
+
+  .post-item:hover::before {
+    width: 3px;
+  }
+
+  .post-score {
+    text-align: center;
+    border: 1px solid var(--dim);
+    padding: 6px 4px;
+    background: var(--char);
+  }
+
+  .score-num {
+    font-family: 'VT323', monospace;
+    font-size: 28px;
+    color: var(--crimson);
+    display: block;
+    line-height: 1;
+  }
+
+  .score-arrow {
+    color: var(--dim);
+    cursor: pointer;
+    display: block;
+    font-size: 16px;
+    text-align: center;
+    transition: color 0.1s;
+    user-select: none;
+  }
+
+  .score-arrow:hover { color: var(--ember); }
+
+  .post-content { }
+
+  .post-flair {
+    display: inline-block;
+    background: var(--blood);
+    color: var(--pale);
+    font-size: 9px;
+    letter-spacing: 2px;
+    padding: 2px 8px;
+    text-transform: uppercase;
+    margin-bottom: 5px;
+    border: 1px solid var(--rust);
+  }
+
+  .post-flair.green { background: #001a00; border-color: #003300; color: #00cc44; }
+  .post-flair.amber { background: #1a0e00; border-color: #332200; color: var(--amber); }
+  .post-flair.red { background: var(--blood); }
+
+  .post-title {
+    font-family: 'Courier Prime', monospace;
+    font-size: 15px;
+    color: var(--pale);
+    text-decoration: none;
+    display: block;
+    margin-bottom: 6px;
+    transition: color 0.1s;
+  }
+
+  .post-title:hover { color: var(--ember); }
+
+  .post-meta {
+    font-size: 11px;
+    color: var(--fog);
+  }
+
+  .post-meta .username {
+    color: var(--bone);
+    font-weight: bold;
+  }
+
+  .post-meta .tag {
+    color: var(--crimson);
+  }
+
+  .post-stats {
+    text-align: right;
+    font-size: 11px;
+    color: var(--fog);
+    white-space: nowrap;
+  }
+
+  .post-stat-item {
+    display: block;
+    margin-bottom: 2px;
+  }
+
+  .post-stat-item span {
+    color: var(--bone);
+    font-family: 'VT323', monospace;
+    font-size: 16px;
+  }
+
+  /* ===== SIDEBAR ===== */
+  .sidebar-block {
+    border-bottom: 1px solid var(--dim);
+  }
+
+  .sidebar-block p {
+    padding: 12px 16px;
+    font-size: 12px;
+    line-height: 1.7;
+    color: var(--fog);
+  }
+
+  .sidebar-block p strong {
+    color: var(--bone);
+  }
+
+  .sidebar-list {
+    list-style: none;
+    padding: 8px 0;
+  }
+
+  .sidebar-list li {
+    border-bottom: 1px solid rgba(61,31,31,0.5);
+    padding: 0;
+  }
+
+  .sidebar-list li a {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 16px;
+    color: var(--fog);
+    text-decoration: none;
+    font-size: 12px;
+    transition: all 0.1s;
+  }
+
+  .sidebar-list li a:hover {
+    background: var(--smoke);
+    color: var(--ember);
+    padding-left: 20px;
+  }
+
+  .sidebar-list li a .badge {
+    font-family: 'VT323', monospace;
+    font-size: 16px;
+    color: var(--crimson);
+  }
+
+  /* ===== RULES / MANIFESTO ===== */
+  .rule-item {
+    display: flex;
+    gap: 12px;
+    padding: 10px 16px;
+    border-bottom: 1px solid rgba(61,31,31,0.4);
+    font-size: 12px;
+    line-height: 1.5;
+  }
+
+  .rule-num {
+    font-family: 'VT323', monospace;
+    font-size: 24px;
+    color: var(--blood);
+    min-width: 24px;
+    text-align: right;
+  }
+
+  .rule-text {
+    color: var(--fog);
+  }
+
+  .rule-text strong {
+    color: var(--bone);
+    display: block;
+    margin-bottom: 2px;
+  }
+
+  /* ===== TOOL CARDS ===== */
+  .tools-grid {
+    padding: 16px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .tool-card {
+    border: 1px solid var(--dim);
+    padding: 12px;
+    background: var(--char);
+    cursor: pointer;
+    transition: all 0.1s;
+    text-decoration: none;
+    display: block;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .tool-card::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--crimson);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.2s;
+  }
+
+  .tool-card:hover { border-color: var(--blood); background: var(--ash); }
+  .tool-card:hover::after { transform: scaleX(1); }
+
+  .tool-icon {
+    font-family: 'VT323', monospace;
+    font-size: 32px;
+    color: var(--crimson);
+    line-height: 1;
+    margin-bottom: 6px;
+    display: block;
+  }
+
+  .tool-name {
+    font-size: 12px;
+    color: var(--pale);
+    font-weight: bold;
+    display: block;
+    letter-spacing: 1px;
+  }
+
+  .tool-desc {
+    font-size: 10px;
+    color: var(--fog);
+    margin-top: 3px;
+    display: block;
+    line-height: 1.4;
+  }
+
+  /* ===== FREE TIER TRACKER ===== */
+  .tier-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 11px;
+  }
+
+  .tier-table thead tr {
+    background: var(--dim);
+  }
+
+  .tier-table th {
+    padding: 6px 10px;
+    text-align: left;
+    color: var(--fog);
+    font-weight: normal;
+    letter-spacing: 1px;
+    font-size: 10px;
+    text-transform: uppercase;
+    border-right: 1px solid var(--smoke);
+  }
+
+  .tier-table td {
+    padding: 7px 10px;
+    border-bottom: 1px solid var(--dim);
+    border-right: 1px solid rgba(61,31,31,0.3);
+    color: var(--fog);
+    vertical-align: top;
+  }
+
+  .tier-table tr:hover td { background: rgba(139,0,0,0.06); }
+
+  .tier-table td.service-name {
+    color: var(--bone);
+    font-weight: bold;
+  }
+
+  .status-dot {
+    display: inline-block;
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    margin-right: 5px;
+    vertical-align: middle;
+  }
+
+  .status-dot.live { background: #00ff41; box-shadow: 0 0 5px #00ff41; }
+  .status-dot.limited { background: var(--amber); box-shadow: 0 0 5px var(--amber); }
+  .status-dot.dead { background: #440000; }
+
+  /* ===== GUIDE SECTION ===== */
+  .guide-card {
+    border-bottom: 1px solid var(--dim);
+    padding: 16px 20px;
+    display: flex;
+    gap: 16px;
+    align-items: start;
+    transition: background 0.1s;
+    cursor: pointer;
+  }
+
+  .guide-card:hover { background: rgba(139,0,0,0.06); }
+
+  .guide-number {
+    font-family: 'VT323', monospace;
+    font-size: 48px;
+    color: var(--dim);
+    line-height: 1;
+    min-width: 40px;
+  }
+
+  .guide-body { flex: 1; }
+
+  .guide-category {
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: var(--crimson);
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+
+  .guide-title {
+    font-family: 'Courier Prime', monospace;
+    font-size: 16px;
+    color: var(--pale);
+    margin-bottom: 6px;
+  }
+
+  .guide-desc {
+    font-size: 12px;
+    color: var(--fog);
+    line-height: 1.5;
+  }
+
+  .guide-meta {
+    display: flex;
+    gap: 16px;
+    margin-top: 8px;
+    font-size: 10px;
+    color: var(--dim);
+  }
+
+  .guide-meta .diff {
+    color: var(--fog);
+  }
+  .guide-meta .diff.easy { color: #00cc44; }
+  .guide-meta .diff.med { color: var(--amber); }
+  .guide-meta .diff.hard { color: var(--crimson); }
+
+  /* ===== FOOTER ===== */
+  footer {
+    border-top: 2px solid var(--blood);
+    background: var(--void);
+    padding: 30px 20px;
+    text-align: center;
+  }
+
+  .footer-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    max-width: 1200px;
+    margin: 0 auto 30px;
+    text-align: left;
+  }
+
+  .footer-col h4 {
+    font-family: 'VT323', monospace;
+    font-size: 20px;
+    color: var(--crimson);
+    letter-spacing: 2px;
+    margin-bottom: 10px;
+    border-bottom: 1px solid var(--dim);
+    padding-bottom: 6px;
+  }
+
+  .footer-col ul {
+    list-style: none;
+  }
+
+  .footer-col ul li {
+    margin-bottom: 5px;
+  }
+
+  .footer-col ul li a {
+    color: var(--fog);
+    text-decoration: none;
+    font-size: 12px;
+    transition: color 0.1s;
+  }
+
+  .footer-col ul li a:hover { color: var(--ember); }
+  .footer-col ul li a::before { content: '// '; color: var(--dim); }
+
+  .footer-bottom {
+    font-size: 11px;
+    color: var(--dim);
+    border-top: 1px solid var(--dim);
+    padding-top: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .footer-bottom .ascii-logo {
+    font-family: 'VT323', monospace;
+    font-size: 18px;
+    color: var(--blood);
+    letter-spacing: 4px;
+  }
+
+  /* ===== MARQUEE ===== */
+  .marquee-bar {
+    background: var(--blood);
+    padding: 4px 0;
+    overflow: hidden;
+    border-bottom: 1px solid var(--rust);
+    font-size: 11px;
+    color: var(--pale);
+    letter-spacing: 1px;
+    white-space: nowrap;
+  }
+
+  .marquee-inner {
+    display: inline-block;
+    animation: marquee 30s linear infinite;
+  }
+
+  @keyframes marquee {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+
+  /* ===== ANNOUNCEMENT ===== */
+  .announcement {
+    background: rgba(139,0,0,0.15);
+    border: 1px solid var(--blood);
+    border-left: 4px solid var(--crimson);
+    margin: 20px;
+    padding: 12px 16px;
+    font-size: 12px;
+    color: var(--fog);
+  }
+
+  .announcement strong {
+    color: var(--ember);
+    font-family: 'VT323', monospace;
+    font-size: 16px;
+    letter-spacing: 1px;
+  }
+
+  /* ===== SUBMIT FORM ===== */
+  .submit-area {
+    padding: 20px;
+    border-bottom: 1px solid var(--dim);
+  }
+
+  .form-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+
+  .terminal-input {
+    flex: 1;
+    background: var(--char);
+    border: 1px solid var(--dim);
+    color: var(--bone);
+    padding: 8px 12px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.1s;
+  }
+
+  .terminal-input:focus {
+    border-color: var(--crimson);
+    box-shadow: 0 0 10px rgba(204,0,0,0.2);
+  }
+
+  .terminal-input::placeholder {
+    color: var(--dim);
+  }
+
+  .btn-terminal {
+    background: var(--blood);
+    border: 1px solid var(--crimson);
+    color: var(--pale);
+    padding: 8px 20px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.1s;
+    white-space: nowrap;
+  }
+
+  .btn-terminal:hover {
+    background: var(--crimson);
+    box-shadow: 0 0 15px rgba(204,0,0,0.4);
+  }
+
+  .select-terminal {
+    background: var(--char);
+    border: 1px solid var(--dim);
+    color: var(--fog);
+    padding: 8px 12px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px;
+    outline: none;
+    cursor: pointer;
+  }
+
+  .select-terminal:focus { border-color: var(--crimson); }
+
+  /* ===== TAG CLOUD ===== */
+  .tag-cloud {
+    padding: 12px 16px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .tag {
+    background: var(--char);
+    border: 1px solid var(--dim);
+    color: var(--fog);
+    padding: 3px 10px;
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.1s;
+    text-decoration: none;
+  }
+
+  .tag:hover {
+    border-color: var(--blood);
+    color: var(--ember);
+  }
+
+  .tag.hot {
+    border-color: var(--blood);
+    color: var(--bone);
+  }
+
+  /* ===== PROGRESS BAR ===== */
+  .limit-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .bar-track {
+    flex: 1;
+    height: 6px;
+    background: var(--char);
+    border: 1px solid var(--dim);
+  }
+
+  .bar-fill {
+    height: 100%;
+    background: var(--crimson);
+    transition: width 0.5s;
+  }
+
+  .bar-fill.warn { background: var(--amber); }
+  .bar-fill.ok { background: var(--green-crt); }
+
+  /* ===== GLYPH DECORATION ===== */
+  .glyph-border {
+    border: 1px solid var(--dim);
+    padding: 10px;
+    position: relative;
+  }
+
+  .glyph-border::before {
+    content: attr(data-label);
+    position: absolute;
+    top: -8px;
+    left: 10px;
+    background: var(--void);
+    padding: 0 6px;
+    font-size: 10px;
+    color: var(--blood);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  /* ===== SCROLL & MISC ===== */
+  ::-webkit-scrollbar { width: 8px; background: var(--void); }
+  ::-webkit-scrollbar-thumb { background: var(--dim); }
+  ::-webkit-scrollbar-thumb:hover { background: var(--blood); }
+
+  a { color: inherit; }
+
+  .section-spacer { height: 1px; background: var(--dim); }
+
+  /* ===== TABS ===== */
+  .tab-bar {
+    display: flex;
+    border-bottom: 1px solid var(--dim);
+    background: var(--ash);
+  }
+
+  .tab-btn {
+    padding: 8px 16px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    background: none;
+    border: none;
+    border-right: 1px solid var(--dim);
+    color: var(--fog);
+    cursor: pointer;
+    transition: all 0.1s;
+  }
+
+  .tab-btn:hover, .tab-btn.active {
+    background: var(--smoke);
+    color: var(--ember);
+  }
+
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* ===== RESPONSIVE ===== */
+  @media (max-width: 768px) {
+    .grid-main { grid-template-columns: 1fr; }
+    .col-side { display: none; }
+    .masthead-stats { display: none; }
+    .tools-grid { grid-template-columns: 1fr; }
+    .footer-grid { grid-template-columns: 1fr 1fr; }
+    .logo-glyph { font-size: 48px; }
+    .logo-title { font-size: 30px; }
+    .post-item { grid-template-columns: 40px 1fr; }
+    .post-stats { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="noise"></div>
+
+<!-- MARQUEE -->
+<div class="marquee-bar">
+  <span class="marquee-inner">
+    &nbsp;&nbsp;&nbsp;[SYS] NULLROUTE COLLECTIVE :: OPERATIONAL &nbsp;&nbsp;&bull;&nbsp;&nbsp; NEW GUIDE: Running LLaMa 3.2 on a $40 ThinkPad &nbsp;&nbsp;&bull;&nbsp;&nbsp; COMMUNITY TIP: Perplexity resets every 24h -- rotate at midnight UTC &nbsp;&nbsp;&bull;&nbsp;&nbsp; [HOT] Chaining HuggingChat + Mistral for zero-cost reasoning chains &nbsp;&nbsp;&bull;&nbsp;&nbsp; FREE TIER ALERT: Groq raised rate limits 3x &nbsp;&nbsp;&bull;&nbsp;&nbsp; USER study: prompt compression cuts token cost by 40% avg &nbsp;&nbsp;&bull;&nbsp;&nbsp; [NEW TOOL] nullzip.sh -- compress prompts for dumb APIs &nbsp;&nbsp;&bull;&nbsp;&nbsp; WELCOME // total users: 11,847 &nbsp;&nbsp;&bull;&nbsp;&nbsp; be clever, not rich. &nbsp;&nbsp;&bull;&nbsp;&nbsp;
+    &nbsp;&nbsp;&nbsp;[SYS] NULLROUTE COLLECTIVE :: OPERATIONAL &nbsp;&nbsp;&bull;&nbsp;&nbsp; NEW GUIDE: Running LLaMa 3.2 on a $40 ThinkPad &nbsp;&nbsp;&bull;&nbsp;&nbsp; COMMUNITY TIP: Perplexity resets every 24h -- rotate at midnight UTC &nbsp;&nbsp;&bull;&nbsp;&nbsp; [HOT] Chaining HuggingChat + Mistral for zero-cost reasoning chains &nbsp;&nbsp;&bull;&nbsp;&nbsp; FREE TIER ALERT: Groq raised rate limits 3x &nbsp;&nbsp;&bull;&nbsp;&nbsp; USER study: prompt compression cuts token cost by 40% avg &nbsp;&nbsp;&bull;&nbsp;&nbsp; [NEW TOOL] nullzip.sh -- compress prompts for dumb APIs &nbsp;&nbsp;&bull;&nbsp;&nbsp; WELCOME // total users: 11,847 &nbsp;&nbsp;&bull;&nbsp;&nbsp; be clever, not rich. &nbsp;&nbsp;&bull;&nbsp;&nbsp;
+  </span>
+</div>
+
+<!-- MASTHEAD -->
+<div id="masthead">
+  <div class="masthead-top">
+    <span>[ NULLROUTE.SYS v2.4.1 :: collective intelligence for the resourceless ]</span>
+    <span id="clock-display">LOADING...</span>
+  </div>
+  <div class="masthead-main">
+    <div class="logo-glyph">NR//</div>
+    <div class="logo-text">
+      <div class="logo-title">NULLROUTE</div>
+      <div class="logo-sub">zero-budget AI survival collective // est. 2023</div>
+    </div>
+    <div class="masthead-stats">
+      <div class="stat-box">
+        <span class="stat-num" id="stat-online">847</span>
+        <span class="stat-label">online</span>
+      </div>
+      <div class="stat-box">
+        <span class="stat-num">34</span>
+        <span class="stat-label">free tiers live</span>
+      </div>
+      <div class="stat-box">
+        <span class="stat-num">0$</span>
+        <span class="stat-label">required</span>
+      </div>
+    </div>
+  </div>
+  <nav>
+    <a href="#feed" class="active">// FEED</a>
+    <a href="#guides">// GUIDES</a>
+    <a href="#tools">// TOOLS</a>
+    <a href="#tiers">// FREE TIERS</a>
+    <a href="#local">// LOCAL AI</a>
+    <a href="#chains">// PROMPT CHAINS</a>
+    <a href="#manifesto">// MANIFESTO</a>
+    <a href="#submit">// SUBMIT</a>
+  </nav>
+</div>
+
+<!-- MAIN GRID -->
+<div class="container">
+  <div class="grid-main">
+
+    <!-- MAIN COLUMN -->
+    <div class="col-main">
+
+      <!-- HERO TERMINAL -->
+      <div id="hero">
+        <div class="terminal-window">
+          <div class="terminal-titlebar">
+            <span class="terminal-dot r"></span>
+            <span class="terminal-dot y"></span>
+            <span class="terminal-dot g"></span>
+            &nbsp;&nbsp; nullroute@collective:~$ _
+          </div>
+          <div class="terminal-body" id="terminal-output">
+            <div><span class="prompt">nullroute@collective:~$</span> cat WELCOME.txt</div>
+            <div class="output">&nbsp;</div>
+            <div class="output highlight">// NULLROUTE COLLECTIVE</div>
+            <div class="output">AI without the invoice. Intelligence without the subscription.</div>
+            <div class="output dim-line">-------------------------------------------------------</div>
+            <div class="output">You don't need $20/month. You need <span class="highlight">systems.</span></div>
+            <div class="output">Free tiers. Open weights. Local inference. Clever chains.</div>
+            <div class="output">A culture of <span class="highlight">cleverness</span> instead of hustle.</div>
+            <div class="output dim-line">&nbsp;</div>
+            <div class="output">This is not a piracy hub. This is an engineering culture.</div>
+            <div class="output">We route around scarcity with knowledge.</div>
+            <div class="output dim-line">&nbsp;</div>
+            <div><span class="prompt">nullroute@collective:~$</span> <span class="cursor"></span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ANNOUNCEMENT -->
+      <div class="announcement">
+        <strong>[ALERT]</strong> Groq's free API now supports Llama 3.3 70B at 30 req/min. No credit card. <a href="#tiers" style="color:var(--ember);">See tier map &rarr;</a>
+      </div>
+
+      <!-- TAB BAR -->
+      <div class="tab-bar">
+        <button class="tab-btn active" onclick="switchTab('hot')">HOT</button>
+        <button class="tab-btn" onclick="switchTab('new')">NEW</button>
+        <button class="tab-btn" onclick="switchTab('guides-tab')">GUIDES</button>
+        <button class="tab-btn" onclick="switchTab('tools-tab')">TOOLS</button>
+      </div>
+
+      <!-- FEED: HOT -->
+      <div id="tab-hot" class="tab-content active">
+        <div class="section-header">
+          <span>// ACTIVE TRANSMISSIONS</span>
+          <span class="sec-count">sort: [HOT]</span>
+        </div>
+
+        <div class="post-list">
+
+          <div class="post-item">
+            <div class="post-score">
+              <span class="score-arrow" onclick="vote(this, 1)">&#9650;</span>
+              <span class="score-num">847</span>
+              <span class="score-arrow" onclick="vote(this, -1)">&#9660;</span>
+            </div>
+            <div class="post-content">
+              <span class="post-flair green">SYSTEM</span>
+              <a class="post-title" href="#">The Infinite Free Stack: chaining Groq + HuggingFace + OpenRouter free tiers for 0$/month production use</a>
+              <div class="post-meta">
+                posted by <span class="username">voidwalker_88</span> &nbsp; 3h ago &nbsp;
+                <span class="tag">#routing</span>
+                <span class="tag">#free-tiers</span>
+                <span class="tag">#production</span>
+              </div>
+            </div>
+            <div class="post-stats">
+              <span class="post-stat-item"><span>341</span> replies</span>
+              <span class="post-stat-item"><span>12k</span> views</span>
+              <span class="post-stat-item" style="color:var(--green-crt)">VERIFIED</span>
+            </div>
+          </div>
+
+          <div class="post-item">
+            <div class="post-score">
+              <span class="score-arrow" onclick="vote(this, 1)">&#9650;</span>
+              <span class="score-num">634</span>
+              <span class="score-arrow" onclick="vote(this, -1)">&#9660;</span>
+            </div>
+            <div class="post-content">
+              <span class="post-flair amber">GUIDE</span>
+              <a class="post-title" href="#">I ran Mistral 7B quantized on a 2013 MacBook Air for 3 months. Here's what actually works.</a>
+              <div class="post-meta">
+                posted by <span class="username">null_operator</span> &nbsp; 6h ago &nbsp;
+                <span class="tag">#local-inference</span>
+                <span class="tag">#llama.cpp</span>
+              </div>
+            </div>
+            <div class="post-stats">
+              <span class="post-stat-item"><span>209</span> replies</span>
+              <span class="post-stat-item"><span>8.4k</span> views</span>
+            </div>
+          </div>
+
+          <div class="post-item">
+            <div class="post-score">
+              <span class="score-arrow" onclick="vote(this, 1)">&#9650;</span>
+              <span class="score-num">512</span>
+              <span class="score-arrow" onclick="vote(this, -1)">&#9660;</span>
+            </div>
+            <div class="post-content">
+              <span class="post-flair red">TOOL</span>
+              <a class="post-title" href="#">nullzip: a shell script that compresses your prompts by 38% before sending to any API -- preserves semantics</a>
+              <div class="post-meta">
+                posted by <span class="username">recluse_r00t</span> &nbsp; 1d ago &nbsp;
+                <span class="tag">#prompt-engineering</span>
+                <span class="tag">#token-saving</span>
+                <span class="tag">#bash</span>
+              </div>
+            </div>
+            <div class="post-stats">
+              <span class="post-stat-item"><span>178</span> replies</span>
+              <span class="post-stat-item"><span>6.1k</span> views</span>
+              <span class="post-stat-item" style="color:var(--green-crt)">TOOL</span>
+            </div>
+          </div>
+
+          <div class="post-item">
+            <div class="post-score">
+              <span class="score-arrow" onclick="vote(this, 1)">&#9650;</span>
+              <span class="score-num">447</span>
+              <span class="score-arrow" onclick="vote(this, -1)">&#9660;</span>
+            </div>
+            <div class="post-content">
+              <span class="post-flair green">SYSTEM</span>
+              <a class="post-title" href="#">Account rotation system: how I maintain 6 fresh free-tier accounts ethically and stay within rate limits using a cron scheduler</a>
+              <div class="post-meta">
+                posted by <span class="username">chrono_vagrant</span> &nbsp; 2d ago &nbsp;
+                <span class="tag">#accounts</span>
+                <span class="tag">#automation</span>
+              </div>
+            </div>
+            <div class="post-stats">
+              <span class="post-stat-item"><span>133</span> replies</span>
+              <span class="post-stat-item"><span>5.2k</span> views</span>
+            </div>
+          </div>
+
+          <div class="post-item">
+            <div class="post-score">
+              <span class="score-arrow" onclick="vote(this, 1)">&#9650;</span>
+              <span class="score-num">389</span>
+              <span class="score-arrow" onclick="vote(this, -1)">&#9660;</span>
+            </div>
+            <div class="post-content">
+              <span class="post-flair amber">GUIDE</span>
+              <a class="post-title" href="#">The "small brain + big brain" architecture: use a tiny local model to classify and route tasks to the right free cloud model</a>
+              <div class="post-meta">
+                posted by <span class="username">dead_sector</span> &nbsp; 3d ago &nbsp;
+                <span class="tag">#architecture</span>
+                <span class="tag">#routing</span>
+                <span class="tag">#phi-3</span>
+              </div>
+            </div>
+            <div class="post-stats">
+              <span class="post-stat-item"><span>97</span> replies</span>
+              <span class="post-stat-item"><span>4.8k</span> views</span>
+              <span class="post-stat-item" style="color:var(--amber)">POPULAR</span>
+            </div>
+          </div>
+
+          <div class="post-item">
+            <div class="post-score">
+              <span class="score-arrow" onclick="vote(this, 1)">&#9650;</span>
+              <span class="score-num">301</span>
+              <span class="score-arrow" onclick="vote(this, -1)">&#9660;</span>
+            </div>
+            <div class="post-content">
+              <span class="post-flair red">DISCUSSION</span>
+              <a class="post-title" href="#">PSA: Perplexity free tier resets at 00:00 UTC -- if you're in US timezone you get double the daily queries by staying up past reset</a>
+              <div class="post-meta">
+                posted by <span class="username">xerxes_mnemonic</span> &nbsp; 3d ago &nbsp;
+                <span class="tag">#perplexity</span>
+                <span class="tag">#tip</span>
+              </div>
+            </div>
+            <div class="post-stats">
+              <span class="post-stat-item"><span>88</span> replies</span>
+              <span class="post-stat-item"><span>3.9k</span> views</span>
+            </div>
+          </div>
+
+          <div class="post-item">
+            <div class="post-score">
+              <span class="score-arrow" onclick="vote(this, 1)">&#9650;</span>
+              <span class="score-num">277</span>
+              <span class="score-arrow" onclick="vote(this, -1)">&#9660;</span>
+            </div>
+            <div class="post-content">
+              <span class="post-flair green">SYSTEM</span>
+              <a class="post-title" href="#">Anon deployed a full RAG pipeline for $0: HuggingFace Spaces + Qdrant free tier + Mistral API free tier + Vercel. Schema inside.</a>
+              <div class="post-meta">
+                posted by <span class="username">fragment_ghost</span> &nbsp; 5d ago &nbsp;
+                <span class="tag">#RAG</span>
+                <span class="tag">#deployment</span>
+                <span class="tag">#qdrant</span>
+              </div>
+            </div>
+            <div class="post-stats">
+              <span class="post-stat-item"><span>122</span> replies</span>
+              <span class="post-stat-item"><span>4.1k</span> views</span>
+              <span class="post-stat-item" style="color:var(--green-crt)">VERIFIED</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- FEED: NEW (hidden by default) -->
+      <div id="tab-new" class="tab-content">
+        <div class="section-header"><span>// FRESH TRANSMISSIONS</span><span class="sec-count">sort: [NEW]</span></div>
+        <div class="post-list">
+          <div class="post-item">
+            <div class="post-score">
+              <span class="score-arrow" onclick="vote(this,1)">&#9650;</span>
+              <span class="score-num">4</span>
+              <span class="score-arrow" onclick="vote(this,-1)">&#9660;</span>
+            </div>
+            <div class="post-content">
+              <span class="post-flair amber">QUESTION</span>
+              <a class="post-title" href="#">Does anyone have a working llama.cpp config for Raspberry Pi 5 that doesn't melt the SD card?</a>
+              <div class="post-meta">posted by <span class="username">hex_drifter</span> &nbsp; 14min ago &nbsp; <span class="tag">#raspberry-pi</span> <span class="tag">#local</span></div>
+            </div>
+            <div class="post-stats"><span class="post-stat-item"><span>2</span> replies</span></div>
+          </div>
+          <div class="post-item">
+            <div class="post-score">
+              <span class="score-arrow" onclick="vote(this,1)">&#9650;</span>
+              <span class="score-num">11</span>
+              <span class="score-arrow" onclick="vote(this,-1)">&#9660;</span>
+            </div>
+            <div class="post-content">
+              <span class="post-flair green">SYSTEM</span>
+              <a class="post-title" href="#">Finally got Ollama + Open-WebUI running in a GitHub Codespace free tier. 60h/month = real use. Write-up with docker-compose.</a>
+              <div class="post-meta">posted by <span class="username">static_witch</span> &nbsp; 1h ago &nbsp; <span class="tag">#codespaces</span> <span class="tag">#ollama</span></div>
+            </div>
+            <div class="post-stats"><span class="post-stat-item"><span>7</span> replies</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- GUIDES TAB -->
+      <div id="tab-guides-tab" class="tab-content" id="guides">
+        <div class="section-header"><span>// SURVIVAL GUIDES</span><span class="sec-count">curated + community</span></div>
+
+        <div class="guide-card">
+          <div class="guide-number">01</div>
+          <div class="guide-body">
+            <div class="guide-category">FOUNDATION</div>
+            <div class="guide-title">The Zero-Dollar AI Stack: A Complete Map</div>
+            <div class="guide-desc">Every free tier worth using in 2024, their actual limits, what they're good for, and how to wire them together into a single coherent workflow. Includes fallback chains for when one service goes down.</div>
+            <div class="guide-meta">
+              <span>by <strong style="color:var(--bone)">voidwalker_88</strong></span>
+              <span class="diff easy">BEGINNER</span>
+              <span>~20min read</span>
+              <span style="color:var(--crimson)">PINNED</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="guide-card">
+          <div class="guide-number">02</div>
+          <div class="guide-body">
+            <div class="guide-category">LOCAL INFERENCE</div>
+            <div class="guide-title">llama.cpp on Old Hardware: The Quantization Bible</div>
+            <div class="guide-desc">Q4_K_M vs Q5_K_S vs GGUF IQ3 -- a real breakdown of what runs where. Tested on ThinkPad X230, RPi 4, old iMac, a $100 ChromeBook. Includes batch size and context window tradeoffs.</div>
+            <div class="guide-meta">
+              <span>by <strong style="color:var(--bone)">null_operator</strong></span>
+              <span class="diff med">INTERMEDIATE</span>
+              <span>~35min read</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="guide-card">
+          <div class="guide-number">03</div>
+          <div class="guide-body">
+            <div class="guide-category">PROMPT ENGINEERING</div>
+            <div class="guide-title">Prompt Compression Without Losing Meaning</div>
+            <div class="guide-desc">How to strip your prompts down to semantic core before sending them to rate-limited APIs. Techniques from information theory, plus a reusable Python script that does it automatically using a local phi-3 mini model.</div>
+            <div class="guide-meta">
+              <span>by <strong style="color:var(--bone)">recluse_r00t</strong></span>
+              <span class="diff med">INTERMEDIATE</span>
+              <span>~25min read</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="guide-card">
+          <div class="guide-number">04</div>
+          <div class="guide-body">
+            <div class="guide-category">ARCHITECTURE</div>
+            <div class="guide-title">Free-Tier RAG: No Vector DB Subscription Required</div>
+            <div class="guide-desc">Build a fully functional Retrieval-Augmented Generation system using Qdrant free cloud, HuggingFace embeddings (free), and Groq inference (free). Deploy on Vercel for $0. This is actually production-ready.</div>
+            <div class="guide-meta">
+              <span>by <strong style="color:var(--bone)">dead_sector</strong></span>
+              <span class="diff hard">ADVANCED</span>
+              <span>~50min read</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TOOLS TAB -->
+      <div id="tab-tools-tab" class="tab-content">
+        <div class="section-header"><span>// COLLECTIVE TOOLS</span><span class="sec-count">open source, no cost</span></div>
+        <div class="tools-grid" style="padding:20px;">
+
+          <a class="tool-card" href="#">
+            <span class="tool-icon">NZ//</span>
+            <span class="tool-name">NULLZIP.SH</span>
+            <span class="tool-desc">Bash script. Compresses prompts semantically before API call. 30-40% token reduction. Works with any endpoint.</span>
+          </a>
+
+          <a class="tool-card" href="#">
+            <span class="tool-icon">RT//</span>
+            <span class="tool-name">ROUTEMASTER</span>
+            <span class="tool-desc">Python script. Classifies tasks and routes them to the optimal free tier automatically. Configurable fallback chains.</span>
+          </a>
+
+          <a class="tool-card" href="#">
+            <span class="tool-icon">TM//</span>
+            <span class="tool-name">TIERMAPPER</span>
+            <span class="tool-desc">Live dashboard showing status and remaining quotas for 30+ free AI tiers. JSON feed available.</span>
+          </a>
+
+          <a class="tool-card" href="#">
+            <span class="tool-icon">CR//</span>
+            <span class="tool-name">CRONROTATE</span>
+            <span class="tool-desc">Cron-based account rotation scheduler. Manages multiple API keys across daily reset windows.</span>
+          </a>
+
+          <a class="tool-card" href="#">
+            <span class="tool-icon">LX//</span>
+            <span class="tool-name">LEXISCORE</span>
+            <span class="tool-desc">Estimates token cost of a prompt across 10 different tokenizers. Paste and compare before sending.</span>
+          </a>
+
+          <a class="tool-card" href="#">
+            <span class="tool-icon">CH//</span>
+            <span class="tool-name">CHAINBUILDER</span>
+            <span class="tool-desc">Visual (terminal-style) tool for designing multi-model prompt chains. Exports as Python or bash.</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- FREE TIER MAP -->
+      <div id="tiers" style="padding:0; border-top: 1px solid var(--dim);">
+        <div class="section-header">
+          <span>// FREE TIER STATUS MAP</span>
+          <span class="sec-count">updated hourly by community</span>
+        </div>
+
+        <div style="overflow-x:auto; padding: 0 0 20px;">
+          <table class="tier-table" style="margin: 0; width: 100%;">
+            <thead>
+              <tr>
+                <th>SERVICE</th>
+                <th>MODEL(S)</th>
+                <th>LIMIT</th>
+                <th>RESETS</th>
+                <th>NOTES</th>
+                <th>STATUS</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="service-name">Groq</td>
+                <td>Llama 3.3 70B, Mixtral</td>
+                <td>
+                  <div class="limit-bar">
+                    <div class="bar-track"><div class="bar-fill ok" style="width:15%"></div></div>
+                    <span style="font-size:10px;color:var(--fog);">30k/day</span>
+                  </div>
+                </td>
+                <td>daily UTC</td>
+                <td>fastest free inference alive</td>
+                <td><span class="status-dot live"></span>LIVE</td>
+              </tr>
+              <tr>
+                <td class="service-name">HuggingChat</td>
+                <td>Llama 3.1, Mistral, Qwen</td>
+                <td>
+                  <div class="limit-bar">
+                    <div class="bar-track"><div class="bar-fill ok" style="width:30%"></div></div>
+                    <span style="font-size:10px;color:var(--fog);">~20 msg/hr</span>
+                  </div>
+                </td>
+                <td>hourly</td>
+                <td>multi-model, web UI</td>
+                <td><span class="status-dot live"></span>LIVE</td>
+              </tr>
+              <tr>
+                <td class="service-name">OpenRouter</td>
+                <td>Multiple (free tagged)</td>
+                <td>
+                  <div class="limit-bar">
+                    <div class="bar-track"><div class="bar-fill warn" style="width:60%"></div></div>
+                    <span style="font-size:10px;color:var(--fog);">$1 free credit</span>
+                  </div>
+                </td>
+                <td>per account</td>
+                <td>requires card for some. filter for ":free" models</td>
+                <td><span class="status-dot live"></span>LIVE</td>
+              </tr>
+              <tr>
+                <td class="service-name">Mistral API</td>
+                <td>Mistral 7B, Mixtral</td>
+                <td>
+                  <div class="limit-bar">
+                    <div class="bar-track"><div class="bar-fill ok" style="width:20%"></div></div>
+                    <span style="font-size:10px;color:var(--fog);">5 req/min</span>
+                  </div>
+                </td>
+                <td>per minute</td>
+                <td>generous context. good for dev</td>
+                <td><span class="status-dot live"></span>LIVE</td>
+              </tr>
+              <tr>
+                <td class="service-name">Google AI Studio</td>
+                <td>Gemini 1.5 Flash</td>
+                <td>
+                  <div class="limit-bar">
+                    <div class="bar-track"><div class="bar-fill warn" style="width:50%"></div></div>
+                    <span style="font-size:10px;color:var(--fog);">1500/day</span>
+                  </div>
+                </td>
+                <td>daily</td>
+                <td>needs Google acct. large context window</td>
+                <td><span class="status-dot live"></span>LIVE</td>
+              </tr>
+              <tr>
+                <td class="service-name">Perplexity</td>
+                <td>Sonar (web-augmented)</td>
+                <td>
+                  <div class="limit-bar">
+                    <div class="bar-track"><div class="bar-fill warn" style="width:70%"></div></div>
+                    <span style="font-size:10px;color:var(--fog);">~5/4hr</span>
+                  </div>
+                </td>
+                <td>daily UTC</td>
+                <td>resets midnight UTC -- rotate at reset window</td>
+                <td><span class="status-dot live"></span>LIVE</td>
+              </tr>
+              <tr>
+                <td class="service-name">Cohere</td>
+                <td>Command R</td>
+                <td>
+                  <div class="limit-bar">
+                    <div class="bar-track"><div class="bar-fill ok" style="width:10%"></div></div>
+                    <span style="font-size:10px;color:var(--fog);">1000/mo</span>
+                  </div>
+                </td>
+                <td>monthly</td>
+                <td>trial key available, no card needed</td>
+                <td><span class="status-dot live"></span>LIVE</td>
+              </tr>
+              <tr>
+                <td class="service-name">Together.ai</td>
+                <td>Various open models</td>
+                <td>
+                  <div class="limit-bar">
+                    <div class="bar-track"><div class="bar-fill warn" style="width:80%"></div></div>
+                    <span style="font-size:10px;color:var(--fog);">$1 credit</span>
+                  </div>
+                </td>
+                <td>per account</td>
+                <td>good fallback. API-compatible</td>
+                <td><span class="status-dot limited"></span>LIMITED</td>
+              </tr>
+              <tr>
+                <td class="service-name">Cloudflare AI</td>
+                <td>Llama 3, Phi-2, Mistral</td>
+                <td>
+                  <div class="limit-bar">
+                    <div class="bar-track"><div class="bar-fill ok" style="width:5%"></div></div>
+                    <span style="font-size:10px;color:var(--fog);">10k/day neurons</span>
+                  </div>
+                </td>
+                <td>daily</td>
+                <td>workers integration. edge latency</td>
+                <td><span class="status-dot live"></span>LIVE</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- SUBMIT -->
+      <div id="submit" class="submit-area">
+        <div class="section-header" style="margin: -20px -20px 20px;">
+          <span>// TRANSMIT TO COLLECTIVE</span>
+        </div>
+        <div class="glyph-border" data-label="NEW POST // nullroute.sys">
+          <div class="form-row">
+            <input type="text" class="terminal-input" placeholder="title :: what did you discover?" style="flex:3">
+            <select class="select-terminal">
+              <option value="">-- flair --</option>
+              <option>SYSTEM</option>
+              <option>GUIDE</option>
+              <option>TOOL</option>
+              <option>QUESTION</option>
+              <option>DISCUSSION</option>
+              <option>PSA</option>
+            </select>
+          </div>
+          <div class="form-row">
+            <textarea class="terminal-input" rows="5" placeholder="// share the knowledge. no paywalls. no gatekeeping. be specific. show your work." style="resize:vertical; font-family: 'Share Tech Mono', monospace;"></textarea>
+          </div>
+          <div class="form-row">
+            <input type="text" class="terminal-input" placeholder="tags: #free-tier #local #routing ...">
+            <button class="btn-terminal" onclick="handleSubmit()">TRANSMIT &gt;&gt;</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- SIDEBAR -->
+    <div class="col-side">
+
+      <!-- ABOUT -->
+      <div class="sidebar-block">
+        <div class="section-header"><span>// WHAT IS THIS</span></div>
+        <p>
+          <strong>NULLROUTE</strong> is a collective for people who use AI daily but refuse or cannot pay. Not piracy. Not hacks. <strong>Systems.</strong><br><br>
+          Free tiers. Open weights. Local inference. Prompt compression. Tool chaining. A culture of <strong>cleverness instead of hustle.</strong>
+        </p>
+      </div>
+
+      <!-- MANIFESTO SHORT -->
+      <div class="sidebar-block" id="manifesto">
+        <div class="section-header"><span>// DOCTRINE</span></div>
+        <div class="rule-item"><span class="rule-num">01</span><div class="rule-text"><strong>Pay nothing.</strong> Intelligence is not a subscription.</div></div>
+        <div class="rule-item"><span class="rule-num">02</span><div class="rule-text"><strong>Share everything.</strong> Discovered a trick? Post it. Now.</div></div>
+        <div class="rule-item"><span class="rule-num">03</span><div class="rule-text"><strong>Local first.</strong> Your hardware is your sovereignty.</div></div>
+        <div class="rule-item"><span class="rule-num">04</span><div class="rule-text"><strong>No piracy.</strong> This isn't that. That's weak.</div></div>
+        <div class="rule-item"><span class="rule-num">05</span><div class="rule-text"><strong>Cleverness over hustle.</strong> Routes, not grind.</div></div>
+        <div class="rule-item"><span class="rule-num">06</span><div class="rule-text"><strong>Document everything.</strong> Ephemeral knowledge dies.</div></div>
+        <div class="rule-item"><span class="rule-num">07</span><div class="rule-text"><strong>No gatekeeping.</strong> Stupid questions taught us all something.</div></div>
+      </div>
+
+      <!-- TOOLS QUICK ACCESS -->
+      <div class="sidebar-block" id="tools">
+        <div class="section-header"><span>// TOOLS</span></div>
+        <div class="tools-grid">
+          <a class="tool-card" href="#">
+            <span class="tool-icon">NZ//</span>
+            <span class="tool-name">NULLZIP</span>
+            <span class="tool-desc">Compress prompts</span>
+          </a>
+          <a class="tool-card" href="#">
+            <span class="tool-icon">RT//</span>
+            <span class="tool-name">ROUTER</span>
+            <span class="tool-desc">Auto-route tasks</span>
+          </a>
+          <a class="tool-card" href="#">
+            <span class="tool-icon">TM//</span>
+            <span class="tool-name">TIERMAP</span>
+            <span class="tool-desc">Live tier status</span>
+          </a>
+          <a class="tool-card" href="#">
+            <span class="tool-icon">CH//</span>
+            <span class="tool-name">CHAINS</span>
+            <span class="tool-desc">Build pipelines</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- TOP CONTRIBUTORS -->
+      <div class="sidebar-block">
+        <div class="section-header"><span>// TOP NODES</span></div>
+        <ul class="sidebar-list">
+          <li><a href="#">voidwalker_88 <span class="badge">4.2k</span></a></li>
+          <li><a href="#">null_operator <span class="badge">3.8k</span></a></li>
+          <li><a href="#">dead_sector <span class="badge">2.1k</span></a></li>
+          <li><a href="#">recluse_r00t <span class="badge">1.9k</span></a></li>
+          <li><a href="#">chrono_vagrant <span class="badge">1.4k</span></a></li>
+          <li><a href="#">fragment_ghost <span class="badge">1.1k</span></a></li>
+          <li><a href="#">xerxes_mnemonic <span class="badge">987</span></a></li>
+          <li><a href="#">static_witch <span class="badge">834</span></a></li>
+        </ul>
+      </div>
+
+      <!-- TAGS -->
+      <div class="sidebar-block">
+        <div class="section-header"><span>// SIGNAL TAGS</span></div>
+        <div class="tag-cloud">
+          <a class="tag hot" href="#">free-tiers</a>
+          <a class="tag hot" href="#">local-inference</a>
+          <a class="tag" href="#">llama.cpp</a>
+          <a class="tag" href="#">groq</a>
+          <a class="tag hot" href="#">prompt-engineering</a>
+          <a class="tag" href="#">ollama</a>
+          <a class="tag" href="#">gguf</a>
+          <a class="tag" href="#">RAG</a>
+          <a class="tag hot" href="#">token-saving</a>
+          <a class="tag" href="#">routing</a>
+          <a class="tag" href="#">raspberry-pi</a>
+          <a class="tag" href="#">huggingface</a>
+          <a class="tag hot" href="#">openrouter</a>
+          <a class="tag" href="#">codespaces</a>
+          <a class="tag" href="#">quantization</a>
+          <a class="tag" href="#">mistral</a>
+          <a class="tag" href="#">phi-3</a>
+          <a class="tag" href="#">automation</a>
+        </div>
+      </div>
+
+      <!-- QUICK LINKS -->
+      <div class="sidebar-block">
+        <div class="section-header"><span>// EXTERNAL NODES</span></div>
+        <ul class="sidebar-list">
+          <li><a href="https://ollama.ai" target="_blank">Ollama <span class="badge">&#8599;</span></a></li>
+          <li><a href="https://groq.com" target="_blank">Groq Console <span class="badge">&#8599;</span></a></li>
+          <li><a href="https://huggingface.co/chat" target="_blank">HuggingChat <span class="badge">&#8599;</span></a></li>
+          <li><a href="https://openrouter.ai" target="_blank">OpenRouter <span class="badge">&#8599;</span></a></li>
+          <li><a href="https://aistudio.google.com" target="_blank">AI Studio <span class="badge">&#8599;</span></a></li>
+          <li><a href="https://github.com/ggerganov/llama.cpp" target="_blank">llama.cpp <span class="badge">&#8599;</span></a></li>
+          <li><a href="https://lmstudio.ai" target="_blank">LM Studio <span class="badge">&#8599;</span></a></li>
+          <li><a href="https://perplexity.ai" target="_blank">Perplexity <span class="badge">&#8599;</span></a></li>
+        </ul>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-grid">
+    <div class="footer-col">
+      <h4>NULLROUTE</h4>
+      <ul>
+        <li><a href="#">About the Collective</a></li>
+        <li><a href="#">Manifesto</a></li>
+        <li><a href="#">How to Contribute</a></li>
+        <li><a href="#">Contact / Signal</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>RESOURCES</h4>
+      <ul>
+        <li><a href="#">Free Tier Map</a></li>
+        <li><a href="#">Local AI Setup Guide</a></li>
+        <li><a href="#">Prompt Compression 101</a></li>
+        <li><a href="#">Chain Templates</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>TOOLS</h4>
+      <ul>
+        <li><a href="#">nullzip.sh</a></li>
+        <li><a href="#">RouteMASTER</a></li>
+        <li><a href="#">TierMapper</a></li>
+        <li><a href="#">ChainBuilder</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>NETWORK</h4>
+      <ul>
+        <li><a href="#">RSS Feed</a></li>
+        <li><a href="#">JSON API</a></li>
+        <li><a href="#">GitHub Org</a></li>
+        <li><a href="#">Matrix Chat</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span>NULLROUTE.SYS // collective intelligence // no cost, no compromise</span>
+    <span class="ascii-logo">NR// v2.4</span>
+    <span>be clever, not rich.</span>
+  </div>
+</footer>
+
+<script>
+  // Clock
+  function updateClock() {
+    const now = new Date();
+    const utc = now.toUTCString().replace('GMT', 'UTC');
+    document.getElementById('clock-display').textContent = 
+      '[' + now.toISOString().replace('T', ' ').substring(0, 19) + ' UTC]';
+  }
+  updateClock();
+  setInterval(updateClock, 1000);
+
+  // Fluctuating online count
+  let baseOnline = 847;
+  function updateOnline() {
+    const delta = Math.floor(Math.random() * 11) - 5;
+    baseOnline = Math.max(800, Math.min(950, baseOnline + delta));
+    const el = document.getElementById('stat-online');
+    if (el) el.textContent = baseOnline;
+  }
+  setInterval(updateOnline, 5000);
+
+  // Tab switching
+  function switchTab(name) {
+    document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+    const target = document.getElementById('tab-' + name);
+    if (target) target.classList.add('active');
+    event.target.classList.add('active');
+  }
+
+  // Voting
+  function vote(arrow, dir) {
+    const scoreEl = arrow.parentElement.querySelector('.score-num');
+    let val = parseInt(scoreEl.textContent);
+    val += dir;
+    scoreEl.textContent = val;
+    scoreEl.style.color = dir > 0 ? 'var(--green-crt)' : 'var(--crimson)';
+    setTimeout(() => { scoreEl.style.color = 'var(--crimson)'; }, 600);
+  }
+
+  // Submit
+  function handleSubmit() {
+    const title = document.querySelector('.terminal-input').value.trim();
+    if (!title) {
+      const btn = document.querySelector('.btn-terminal');
+      btn.textContent = 'TITLE REQUIRED';
+      btn.style.background = 'var(--rust)';
+      setTimeout(() => {
+        btn.textContent = 'TRANSMIT >>';
+        btn.style.background = '';
+      }, 1500);
+      return;
+    }
+    const btn = document.querySelector('.btn-terminal');
+    btn.textContent = 'TRANSMITTED...';
+    btn.style.background = '#003300';
+    setTimeout(() => {
+      btn.textContent = 'TRANSMIT >>';
+      btn.style.background = '';
+    }, 2000);
+  }
+
+  // Nav highlight on scroll
+  const sections = document.querySelectorAll('[id]');
+  const navLinks = document.querySelectorAll('nav a');
+
+  window.addEventListener('scroll', () => {
+    let current = '';
+    sections.forEach(s => {
+      if (window.scrollY >= s.offsetTop - 120) current = s.id;
+    });
+    navLinks.forEach(a => {
+      a.classList.remove('active');
+      if (a.getAttribute('href') === '#' + current) a.classList.add('active');
+    });
+  });
+
+  // Terminal typewriter on load
+  const lines = [
+    { delay: 500, el: 'term-1', text: 'nullroute@collective:~$ cat WELCOME.txt' },
+  ];
+
+  // Subtle glitch on logo
+  const logoGlyph = document.querySelector('.logo-glyph');
+  setInterval(() => {
+    if (Math.random() < 0.05) {
+      logoGlyph.style.textShadow = '2px 0 var(--ember), -2px 0 var(--green-crt), 0 0 20px var(--crimson)';
+      setTimeout(() => {
+        logoGlyph.style.textShadow = '0 0 10px var(--crimson), 0 0 30px rgba(204,0,0,0.5), 2px 2px 0 var(--rust)';
+      }, 80);
+    }
+  }, 2000);
+
+  // Red ember particles (very subtle)
+  const canvas = document.createElement('canvas');
+  canvas.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:9996;';
+  document.body.appendChild(canvas);
+  const ctx = canvas.getContext('2d');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  window.addEventListener('resize', () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; });
+
+  const particles = Array.from({length: 25}, () => ({
+    x: Math.random() * window.innerWidth,
+    y: Math.random() * window.innerHeight,
+    vx: (Math.random() - 0.5) * 0.3,
+    vy: -Math.random() * 0.4 - 0.1,
+    life: Math.random(),
+    size: Math.random() * 2 + 0.5,
+    alpha: Math.random() * 0.4
+  }));
+
+  function animParticles() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    particles.forEach(p => {
+      p.x += p.vx;
+      p.y += p.vy;
+      p.life -= 0.003;
+      if (p.life <= 0 || p.y < 0) {
+        p.x = Math.random() * window.innerWidth;
+        p.y = canvas.height + 10;
+        p.life = Math.random() * 0.5 + 0.5;
+        p.alpha = Math.random() * 0.3 + 0.05;
+      }
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(${Math.random() > 0.5 ? '204,0,0' : '255,100,0'},${p.alpha * p.life})`;
+      ctx.fill();
+    });
+    requestAnimationFrame(animParticles);
+  }
+  animParticles();
+</script>
+</body>
+</html>
